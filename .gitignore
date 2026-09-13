@@ -6,3 +6,12 @@
 *.os
 *.o
 .sconsign.dblite
+build/.venv/
+build/.tools/
+build/out/
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+demo/bin/*.dll

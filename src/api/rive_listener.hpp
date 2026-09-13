@@ -19,7 +19,7 @@ class RiveListener : public Resource {
     GDCLASS(RiveListener, Resource);
 
    private:
-    const rive::StateMachineListener *listener;
+    const rive::StateMachineListener *listener = nullptr;
     int index = -1;
 
    protected:
@@ -53,6 +53,7 @@ class RiveListener : public Resource {
             (int)rive::ListenerType::move
         );
         ClassDB::bind_method(D_METHOD("get_type"), &RiveListener::get_type);
+        ClassDB::bind_method(D_METHOD("has_type", "type"), &RiveListener::has_type);
     }
 
    public:
@@ -79,7 +80,16 @@ class RiveListener : public Resource {
     }
 
     int get_type() const {
-        return listener ? (int)listener->listenerType() : (int)rive::ListenerType::move;
+        // Modern Rive listeners can handle multiple types. Preserve the legacy
+        // singular API by returning the first match; use has_type for queries.
+        for (int type = 0; type <= (int)rive::ListenerType::gamepad; ++type)
+            if (has_type(type)) return type;
+        return -1;
+    }
+
+    bool has_type(int type) const {
+        return listener && type >= 0 && type <= (int)rive::ListenerType::gamepad &&
+            listener->hasListener((rive::ListenerType)type);
     }
 
     String get_type_string() const {

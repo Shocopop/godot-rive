@@ -7,8 +7,6 @@
 // godot-cpp
 #include <godot_cpp/classes/canvas_item.hpp>
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/image.hpp>
-#include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/classes/input_event_mouse.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
@@ -22,18 +20,10 @@
 #include <rive/animation/state_machine_instance.hpp>
 #include <rive/file.hpp>
 
-// skia
-#include <skia/dependencies/skia/include/core/SkBitmap.h>
-#include <skia/dependencies/skia/include/core/SkCanvas.h>
-#include <skia/dependencies/skia/include/core/SkSurface.h>
-
-#include <skia/renderer/include/skia_factory.hpp>
-#include <skia/renderer/include/skia_renderer.hpp>
-
 // extension
 #include "api/rive_file.hpp"
 #include "rive_instance.hpp"
-#include "skia_instance.hpp"
+#include "rive_texture_renderer.hpp"
 #include "utils/out_redirect.hpp"
 #include "utils/types.hpp"
 #include "viewer_props.hpp"
@@ -49,11 +39,11 @@ class RiveViewerBase {
     CanvasItem *owner;
     ViewerProps props;
     RiveInstance inst;
-    SkiaInstance sk;
+    std::shared_ptr<RiveTextureRenderer> gpu = std::make_shared<RiveTextureRenderer>();
     float elapsed = 0;
     Dictionary cached_scene_property_values;
-    Ref<Image> image;
-    Ref<ImageTexture> texture;
+    Ref<Texture2DRD> texture;
+    bool needs_redraw = true;
 
    protected:
     void _on_path_changed(String path);
@@ -64,11 +54,12 @@ class RiveViewerBase {
     void _on_transform_changed();
     void check_scene_property_changed();
     bool advance(float delta);
-    PackedByteArray frame(float delta);
-    PackedByteArray redraw();
+    void frame(float delta);
+    void redraw();
 
    public:
     RiveViewerBase(CanvasItem *owner);
+    ~RiveViewerBase();
 
     void on_ready();
     void on_draw();

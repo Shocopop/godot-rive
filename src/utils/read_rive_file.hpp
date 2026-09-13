@@ -23,7 +23,7 @@
 using namespace godot;
 using namespace rive;
 
-static Ptr<File> read_rive_file(String path, Factory *factory) {
+static rive::rcp<File> read_rive_file(String path, Factory *factory) {
     CerrRedirect errs = CerrRedirect();
     try {
         if (path.get_extension().to_lower() != "riv") throw RiveException("No .riv path provided.").no_report();
@@ -35,7 +35,7 @@ static Ptr<File> read_rive_file(String path, Factory *factory) {
         Span<const uint8_t> bytes = Span(const_cast<uint8_t *>(_bytes.ptr()), length);
 
         ImportResult result;
-        Ptr<File> file = File::import(bytes, factory, &result);
+        auto file = File::import(bytes, factory, &result);
         if (result != ImportResult::success)
             throw RiveException(String("Failed to import.\nErrors: ") + String(errs.str().c_str()));
 

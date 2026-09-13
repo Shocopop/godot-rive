@@ -32,7 +32,7 @@ class RiveException : public exception {
         message = message_value;
     }
 
-    godot::String get_caller() const _NOEXCEPT {
+    godot::String get_caller() const {
         if (format_args.has("calling_class") && format_args.has("calling_method"))
             return godot::String(" (in {calling_class}.{calling_method})").format(format_args);
         if (format_args.has("calling_class")) return godot::String(" (in {calling_class})").format(format_args);
@@ -40,7 +40,7 @@ class RiveException : public exception {
         return "";
     }
 
-    godot::String get_string() const _NOEXCEPT {
+    godot::String get_string() const {
         return prefix + message + get_caller();
     }
 

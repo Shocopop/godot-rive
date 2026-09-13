@@ -22,6 +22,8 @@
 
 using namespace godot;
 
+class RiveTextureRenderer;
+
 class RiveFile : public Resource {
     GDCLASS(RiveFile, Resource);
 
@@ -29,7 +31,10 @@ class RiveFile : public Resource {
     friend class RiveInstance;
 
    private:
-    Ptr<rive::File> file;
+    // A file can outlive its viewer through the public resource API. Keep its
+    // GPU factory alive until the file and its cached artboards are destroyed.
+    std::shared_ptr<RiveTextureRenderer> renderer_owner;
+    rive::rcp<rive::File> file;
     String path = "";
 
     Instances<RiveArtboard> artboards = Instances<RiveArtboard>([this](int index) -> Ref<RiveArtboard> {
@@ -74,7 +79,7 @@ class RiveFile : public Resource {
     }
 
    public:
-    static Ref<RiveFile> MakeRef(Ptr<rive::File> file_value, String path_value) {
+    static Ref<RiveFile> MakeRef(rive::rcp<rive::File> file_value, String path_value) {
         if (!file_value) return nullptr;
         Ref<RiveFile> obj = memnew(RiveFile);
         obj->file = std::move(file_value);
@@ -82,11 +87,13 @@ class RiveFile : public Resource {
         return obj;
     }
 
-    static Ref<RiveFile> Load(String path, rive::Factory *factory) {
+    static Ref<RiveFile> Load(String path, rive::Factory *factory,
+                             std::shared_ptr<RiveTextureRenderer> renderer_owner = {}) {
         try {
-            Ptr<rive::File> file = read_rive_file(path, factory);
+            auto file = read_rive_file(path, factory);
             if (file != nullptr) {
                 auto file_wrapper = RiveFile::MakeRef(std::move(file), path);
+                file_wrapper->renderer_owner = std::move(renderer_owner);
                 GDPRINT("Successfully imported <", path, ">!");
                 return file_wrapper;
             } else throw RiveException("Unable to import <" + path + ">");
